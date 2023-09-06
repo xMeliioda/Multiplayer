@@ -4,6 +4,7 @@ using Unity.Services.Core;
 using Unity.Services.Lobbies;
 using Unity.Services.Lobbies.Models;
 using UnityEngine;
+using static Cinemachine.CinemachineTriggerAction.ActionSettings;
 
 public class TestLobby : MonoBehaviour
 {
@@ -72,7 +73,7 @@ public class TestLobby : MonoBehaviour
             string lobbyName = "MyLobby";
             int maxPlayer = 4;
 
-            CreateLobbyOptions createLobbyOptions = new CreateLobbyOptions
+            CreateLobbyOptions createLobbyOptions = new()
             {
                 IsPrivate = false,
                 Player = GetPlayer(),
@@ -119,7 +120,7 @@ public class TestLobby : MonoBehaviour
 
     private QueryLobbiesOptions LobbyFilter()
     {
-        QueryLobbiesOptions queryLobbiesOptions = new QueryLobbiesOptions
+        QueryLobbiesOptions queryLobbiesOptions = new ()
         {
             Count = 25,
             Filters = new List<QueryFilter> {
@@ -138,7 +139,7 @@ public class TestLobby : MonoBehaviour
         try
         {
             //QueryResponse queryResponse = await Lobbies.Instance.QueryLobbiesAsync();
-            JoinLobbyByCodeOptions joinLobbyByCodeOptions = new JoinLobbyByCodeOptions
+            JoinLobbyByCodeOptions joinLobbyByCodeOptions = new()
             {
                 Player = GetPlayer()
             };
@@ -202,6 +203,76 @@ public class TestLobby : MonoBehaviour
             }
             });
             joinedLobby = hostLobby;
+        }
+        catch (LobbyServiceException e)
+        {
+            Debug.Log(e);
+        }
+    }
+
+    private async void UpdatePlayerName(string newPlayerName)
+    {
+        try
+        {
+            playerName = newPlayerName;
+            await LobbyService.Instance.UpdatePlayerAsync(joinedLobby.Id, AuthenticationService.Instance.PlayerId, new UpdatePlayerOptions
+            {
+                Data = new Dictionary<string, PlayerDataObject>
+                {
+                    { "PlayerName", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member,  playerName) }
+                }
+            });
+        }
+        catch (LobbyServiceException e)
+        {
+            Debug.Log(e);
+        }
+    }
+
+    private async void LeaveLobby()
+    {
+        try
+        {
+            await LobbyService.Instance.RemovePlayerAsync(joinedLobby.Id, AuthenticationService.Instance.PlayerId);
+        }
+        catch (LobbyServiceException e)
+        {
+            Debug.Log(e);
+        }
+    }
+
+    private async void KickPlayers()
+    {
+        try
+        {
+            await LobbyService.Instance.RemovePlayerAsync(joinedLobby.Id, joinedLobby.Players[1].Id);
+        }
+        catch (LobbyServiceException e)
+        {
+            Debug.Log(e);
+        }
+    }
+
+    private async void MigrateLobbyHost()
+    {
+        try
+        {
+            hostLobby = await Lobbies.Instance.UpdateLobbyAsync(hostLobby.Id, new UpdateLobbyOptions { 
+                HostId = joinedLobby.Players[1].Id
+            });
+            joinedLobby = hostLobby;
+        }
+        catch (LobbyServiceException e)
+        {
+            Debug.Log(e);
+        }
+    }
+
+    private async void DeleteLobby()
+    {
+        try
+        {
+            await LobbyService.Instance.DeleteLobbyAsync(joinedLobby.Id);
         }
         catch (LobbyServiceException e)
         {
