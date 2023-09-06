@@ -67,7 +67,7 @@ public class PlayerNetwork : NetworkBehaviour
         if (Input.GetKeyDown(KeyCode.Y))
         {
             spawnedObjectPrefab.GetComponent<NetworkObject>().Despawn(true);
-            Destroy(spawnedObjectTransform);
+            Destroy(spawnedObjectTransform.gameObject);
         }
 
             Vector3 moveDir = new(0, 0, 0);
